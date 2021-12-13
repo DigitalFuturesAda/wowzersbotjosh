@@ -6,6 +6,9 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -13,7 +16,7 @@ public class Client {
     private static final Snowflake GUILD_ID = Snowflake.of("705157826204401665");
     private static final String UPVOTE_EMOJI = "U+2B06";
     private static final String DOWN_VOTE_EMOJI = "U+2B07";
-    private static final Set<String> TRIGGERS = Set.of("?", "*", "upvote", "vote", "redditmoment");
+    private static final List<String> TRIGGERS = List.of("?", "*", "upvote", "vote", "redditmoment");
 
     public static void main(String[] args) {
         final DiscordClient client = DiscordClient.create("TOKEN!");
