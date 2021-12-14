@@ -26,7 +26,7 @@ public class Client {
                 .filter(createEvent -> createEvent.getGuildId().isPresent()
                         && createEvent.getGuildId().get().equals(GUILD_ID))
                 .map(MessageCreateEvent::getMessage)
-                .filter(message -> isTriggerPhrase(message.getContent()))
+                .filter(Client::isTriggerPhrase)
                 .doOnNext(Client::addReactions)
                 .blockLast();
     }
@@ -37,14 +37,16 @@ public class Client {
         message.addReaction(ReactionEmoji.codepoints(DOWN_VOTE_EMOJI)).subscribe();
     }
 
-    private static boolean isTriggerPhrase(String messageContents){
+    private static boolean isTriggerPhrase(Message message){
         AtomicBoolean flag = new AtomicBoolean(false);
 
         Arrays.asList(TRIGGERS).forEach(trigger -> {
-            if (messageContents.toLowerCase().startsWith(trigger)
-                    && !messageContents.toLowerCase().equals(trigger)) flag.set(true);
+            if (message.getContent().toLowerCase().startsWith(trigger)
+                    && !message.getContent().toLowerCase().equals(trigger)) flag.set(true);
+            if (message.getContent().toLowerCase().endsWith("?") && !message.getContent().equalsIgnoreCase("?")) flag.set(true);
         });
 
+        if (!message.getAttachments().isEmpty()) flag.set(true);
         return flag.get();
     }
 }
