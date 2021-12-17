@@ -46,7 +46,6 @@ public class Client {
 
     private static void addReactions(ResponseData responseData){
         Message message = responseData.getMessage();
-
         System.out.println("Adding reaction to: " + message.getContent());
 
         Mono<Void> specificPub = responseData.isOliver()
@@ -70,12 +69,13 @@ public class Client {
                 .map(USER_OLIVER_ID::equals)
                 .cache();
         Mono<Boolean> isTriggerPhrase = Flux.fromStream(TRIGGERS.stream())
-                .reduce(false, (k, t) -> k || message.getContent().toLowerCase().startsWith(t));
+                .reduce(false, (k, t) -> k || message.getContent().toLowerCase().startsWith(t))
+                .map(k -> k || message.getContent().trim().endsWith("?"));
         Mono<Boolean> hasAttachments = Mono.just(!message.getAttachments().isEmpty());
 
         return ResponseData.of(
                 message,
-                or(isOliver, and(isCorrectChannel, or(isTriggerPhrase, hasAttachments))),
+                and(isCorrectChannel, or(isTriggerPhrase, hasAttachments)),
                 isOliver
         );
     }

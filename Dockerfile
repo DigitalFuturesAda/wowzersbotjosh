@@ -9,4 +9,4 @@ RUN mkdir /opt/gradle
 RUN unzip -d /opt/gradle gradle-5.6-bin.zip
 ENV PATH="/opt/gradle/gradle-5.6/bin:${PATH}"
 RUN gradle build
-CMD ["gradle", "execute"]
+CMD ["gradle", "run"]
