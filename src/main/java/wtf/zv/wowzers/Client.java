@@ -12,6 +12,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.discordjson.Id;
 import discord4j.discordjson.json.MemberData;
 import discord4j.discordjson.json.UserData;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import wtf.zv.wowzers.internal.ResponseData;
@@ -48,19 +49,33 @@ public class Client {
         Message message = responseData.getMessage();
         System.out.println("Adding reaction to: " + message.getContent());
 
-        Mono<Void> specificPub = responseData.isOliver()
+        Mono<Void> specialPub = Mono.just(responseData)
+                .filterWhen(ResponseData::isOliver)
                 .flatMap(k -> message.addReaction(ReactionEmoji.custom(OLIVER_EMOJI_ID, "", false)))
                 .flatMap(k -> message.addReaction(ReactionEmoji.codepoints(FACE_PALM_EMOJI)));
 
         Flux<Void> commonPub = Flux.fromIterable(VOTE_EMOJIS)
                 .flatMap(codepoint -> message.addReaction(ReactionEmoji.codepoints(codepoint)));
 
-        specificPub.subscribe();
-        responseData.matchesSpec().thenMany(commonPub).subscribe();
+        specialPub.subscribe();
+        responseData
+                .matchesSpec()
+                .thenMany(commonPub)
+                .subscribe();
     }
 
     private static ResponseData getResponseData(Message message){
-        Mono<Boolean> isCorrectChannel = message.getChannel().map(Entity::getId).map(CHANNEL_IDS::contains);
+        /*
+         * These Monos are currently being cached so that they can be subscribed to later on from the addReactions
+         * method, if they were not cached this would cause a "stream has already been operated upon or closed" error,
+         * as after a Mono has been subscribed to, it can not be subscribed to again. The cache method transforms a
+         * given Mono into a hot source, meaning it will replay it's previous value.
+         *
+         * Each Mono should be refactored into a Publisher<Boolean> which can serve subscribers an unbounded number of
+         * times.
+         */
+
+        Mono<Boolean> isCorrectChannel = message.getChannel().map(Entity::getId).map(CHANNEL_IDS::contains).cache();
         Mono<Boolean> isOliver = Mono.just(message)
                 .flatMap(Message::getAuthorAsMember)
                 .map(Member::getMemberData)
@@ -70,8 +85,9 @@ public class Client {
                 .cache();
         Mono<Boolean> isTriggerPhrase = Flux.fromStream(TRIGGERS.stream())
                 .reduce(false, (k, t) -> k || message.getContent().toLowerCase().startsWith(t))
-                .map(k -> k || message.getContent().trim().endsWith("?"));
-        Mono<Boolean> hasAttachments = Mono.just(!message.getAttachments().isEmpty());
+                .map(k -> k || message.getContent().trim().endsWith("?"))
+                .cache();
+        Mono<Boolean> hasAttachments = Mono.just(!message.getAttachments().isEmpty()).cache();
 
         return ResponseData.of(
                 message,
