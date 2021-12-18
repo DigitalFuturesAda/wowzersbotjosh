@@ -28,11 +28,11 @@ public class Client {
     private static final Set<String> TRIGGERS = Set.of("?", "*", "upvote", "vote");
 
     private static final Set<String> VOTE_EMOJIS = Set.of(/* upvote = */ "U+2B07", /* downvote = */ "U+2B06");
-    private static final Snowflake OLIVER_EMOJI_ID = Snowflake.of("762403225260261447");
+    private static final Snowflake OLIVER_EMOJI_ID = Snowflake.of("856938969136496670");
     private static final String FACE_PALM_EMOJI = "U+1F926";
 
     public static void main(String[] args) {
-        final DiscordClient client = DiscordClient.create("TOKEN!");
+        final DiscordClient client = DiscordClient.create("OTIwMDY3MjQyNjU2NDExNjg5.Ybe9ZA.PlJCe1ns76bfHehaO8VJJrqCdR4");
 
         client.login()
                 .flatMapMany(gateway -> gateway.on(MessageCreateEvent.class))
@@ -58,10 +58,7 @@ public class Client {
                 .flatMap(codepoint -> message.addReaction(ReactionEmoji.codepoints(codepoint)));
 
         specialPub.subscribe();
-        responseData
-                .matchesSpec()
-                .thenMany(commonPub)
-                .subscribe();
+        commonPub.subscribe();
     }
 
     private static ResponseData getResponseData(Message message){
